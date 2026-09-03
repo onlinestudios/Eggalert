@@ -26,24 +26,27 @@ async def on_ready():
 @bot.event
 async def on_message(message):
 
+    # Only watch the SenZ V2 channel
     if message.channel.id != SOURCE_CHANNEL_ID:
         return
 
+    # Ignore our own bot
     if bot.user and message.author.id == bot.user.id:
         return
 
+    # SenZ must have an embed
     if not message.embeds:
         return
 
     embed = message.embeds[0]
 
-    # Only Secret Egg alerts
+    # Only process Secret Egg alerts
     title = (embed.title or "").lower()
 
     if "secret egg" not in title:
         return
 
-    # Get ALL text from the embed
+    # Collect all text from the embed
     text_parts = []
 
     if embed.title:
@@ -83,11 +86,25 @@ async def on_message(message):
         re.IGNORECASE
     )
 
-    egg = egg_match.group(1).strip() if egg_match else "Unknown"
-    location = location_match.group(1).strip() if location_match else "Unknown"
-    money = money_match.group(1).strip() if money_match else "Unknown"
+    egg = (
+        egg_match.group(1).strip("* ").strip()
+        if egg_match
+        else "Unknown"
+    )
 
-    # Remove approximate symbol
+    location = (
+        location_match.group(1).strip("* ").strip()
+        if location_match
+        else "Unknown"
+    )
+
+    money = (
+        money_match.group(1).strip("* ").strip()
+        if money_match
+        else "Unknown"
+    )
+
+    # Remove ~$ from SenZ's money
     money = money.replace("~$", "$").strip()
 
     # Exact Philippines time when the bot receives the alert
@@ -95,35 +112,35 @@ async def on_message(message):
         ZoneInfo("Asia/Manila")
     ).strftime("%-I:%M %p")
 
-    # Your custom embed
+    # Create your custom Fang S embed
     new_embed = discord.Embed(
         title="Fang S | egg alerts",
         description=(
-            f"🥚 **Secret {egg} Egg spawned in {location}**"
+            f"🥚 Secret {egg} Egg spawned in {location}"
         ),
         color=discord.Color.blurple()
     )
 
     new_embed.add_field(
-        name="Egg",
+        name="🥚 Egg",
         value=egg,
         inline=False
     )
 
     new_embed.add_field(
-        name="Location of egg",
+        name="📌 Location of egg",
         value=location,
         inline=False
     )
 
     new_embed.add_field(
-        name="Spawning time",
+        name="⏰ Spawning time",
         value=spawning_time,
         inline=False
     )
 
     new_embed.add_field(
-        name="Money it makes",
+        name="💰 Money it makes",
         value=money,
         inline=False
     )
@@ -132,6 +149,7 @@ async def on_message(message):
         text="Fang S | Egg Alerts"
     )
 
+    # Send to your real server and ping the role
     try:
         target = await bot.fetch_channel(TARGET_CHANNEL_ID)
 
