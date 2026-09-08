@@ -26,7 +26,7 @@ async def on_ready():
 @bot.event
 async def on_message(message):
 
-    # Only watch the SenZ V2 channel
+    # Only watch SenZ V2 channel
     if message.channel.id != SOURCE_CHANNEL_ID:
         return
 
@@ -34,19 +34,26 @@ async def on_message(message):
     if bot.user and message.author.id == bot.user.id:
         return
 
-    # SenZ must have an embed
+    # Must have an embed
     if not message.embeds:
         return
 
     embed = message.embeds[0]
 
-    # Only process Secret Egg alerts
+    # Get title
     title = (embed.title or "").lower()
 
-    if "secret egg" not in title:
+    # Detect egg type
+    if "eternal egg" in title:
+        rarity = "Eternal"
+    elif "divine egg" in title:
+        rarity = "Divine"
+    elif "secret egg" in title:
+        rarity = "Secret"
+    else:
         return
 
-    # Collect all text from the embed
+    # Collect all embed text
     text_parts = []
 
     if embed.title:
@@ -104,19 +111,19 @@ async def on_message(message):
         else "Unknown"
     )
 
-    # Remove ~$ from SenZ's money
+    # Remove ~$ from SenZ money
     money = money.replace("~$", "$").strip()
 
-    # Exact Philippines time when the bot receives the alert
+    # Philippines time
     spawning_time = datetime.now(
         ZoneInfo("Asia/Manila")
     ).strftime("%-I:%M %p")
 
-    # Create your custom Fang S embed
+    # Create Fang S embed
     new_embed = discord.Embed(
         title="Fang S | egg alerts",
         description=(
-            f"🥚 Secret {egg} Egg spawned in {location}"
+            f"🥚 {rarity} {egg} Egg spawned in {location}"
         ),
         color=discord.Color.blurple()
     )
@@ -149,7 +156,7 @@ async def on_message(message):
         text="Fang S | Egg Alerts"
     )
 
-    # Send to your real server and ping the role
+    # Send to target channel + ping role
     try:
         target = await bot.fetch_channel(TARGET_CHANNEL_ID)
 
